@@ -1,10 +1,9 @@
 {
   "name": "subplayer",
   "version": "3.0.0",
-  "homepage": "https://payyup.github.io/SubPlayer",
   "private": true,
   "dependencies": {
-    "@ffmpeg/ffmpeg": "^0.10.1",
+    "@ffmpeg/ffmpeg": "^0.9.8",
     "@forlagshuset/simple-fs": "^0.5.0",
     "core-js": "^3.18.0",
     "duration-time-conversion": "^1.0.5",

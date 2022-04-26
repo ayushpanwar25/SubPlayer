@@ -237,7 +237,7 @@ const Style = styled.div`
     }
 `;
 
-FFmpeg.createFFmpeg({ log: true, corePath: "https://unpkg.com/@ffmpeg/core@0.10.0/dist/ffmpeg-core.js" }).load();
+FFmpeg.createFFmpeg({ log: true }).load();
 const fs = new SimpleFS.FileSystem();
 
 export default function Header({
@@ -267,7 +267,7 @@ export default function Header({
         async (file) => {
             try {
                 const { createFFmpeg, fetchFile } = FFmpeg;
-                const ffmpeg = createFFmpeg({ log: true, corePath: "https://unpkg.com/@ffmpeg/core@0.10.0/dist/ffmpeg-core.js" });
+                const ffmpeg = createFFmpeg({ log: true });
                 ffmpeg.setProgress(({ ratio }) => setProcessing(ratio * 100));
                 setLoading(t('LOADING_FFMPEG'));
                 await ffmpeg.load();
@@ -304,22 +304,22 @@ export default function Header({
     const burnSubtitles = useCallback(async () => {
         try {
             const { createFFmpeg, fetchFile } = FFmpeg;
-            const ffmpeg = createFFmpeg({ log: true, corePath: "https://unpkg.com/@ffmpeg/core@0.10.0/dist/ffmpeg-core.js" });
+            const ffmpeg = createFFmpeg({ log: true });
             ffmpeg.setProgress(({ ratio }) => setProcessing(ratio * 100));
             setLoading(t('LOADING_FFMPEG'));
             await ffmpeg.load();
             setLoading(t('LOADING_FONT'));
 
             await fs.mkdir('/fonts');
-            const fontExist = await fs.exists('/fonts/Verdana.ttf');
+            const fontExist = await fs.exists('/fonts/NotoSans.ttf');
             if (fontExist) {
-                const fontBlob = await fs.readFile('/fonts/Verdana.ttf');
+                const fontBlob = await fs.readFile('/fonts/NotoSans.ttf');
                 ffmpeg.FS('writeFile', `tmp/Verdana.ttf`, await fetchFile(fontBlob));
             } else {
-                const fontUrl = 'https://cdn.jsdelivr.net/gh/payyup/SubPlayer/public/Verdana.ttf';
+                const fontUrl = 'https://cdn.jsdelivr.net/gh/payyup/SubPlayer@master/public/NotoSans.ttf';
                 const fontBlob = await fetch(fontUrl).then((res) => res.blob());
-                await fs.writeFile('/fonts/Verdana.ttf', fontBlob);
-                ffmpeg.FS('writeFile', `tmp/Verdana.ttf`, await fetchFile(fontBlob));
+                await fs.writeFile('/fonts/NotoSans.ttf', fontBlob);
+                ffmpeg.FS('writeFile', `tmp/NotoSans.ttf`, await fetchFile(fontBlob));
             }
             setLoading(t('LOADING_VIDEO'));
             ffmpeg.FS(
@@ -430,7 +430,7 @@ export default function Header({
         async () => {
             setLoading(t('LOADING_VIDEO'));
             const baseUrl = "https://youtube-dl-utils-api.herokuapp.com/get_youtube_video_link_with_captions";
-            const encodedUrl = encodeURIComponent(youtubeUrl);
+            const encodedUrl = encodeURIComponent(`${youtubeUrl}`);
             const res = await fetch(`${baseUrl}?url=${encodedUrl}&lang=en`, {
                 method: 'POST',
                 headers: {
