@@ -17,7 +17,7 @@ const toSubTime = (str) => {
 export default function sub2ass(sub) {
     return `
 [Script Info]
-; // 此字幕由爱幕生成
+;
 Synch Point:1
 ScriptType:v4.00+
 Collisions:Normal
@@ -32,7 +32,7 @@ ${sub
     .map((item) => {
         const start = toSubTime(item.start);
         const end = toSubTime(item.end);
-        const text = item.text.replace(/\r?\n/g, '\\N');
+        const text = (item.text2 ? item.text2 : item.text).replace(/\r?\n/g, '\\N');
         return `Dialogue: 0,${start},${end},Default,NTP,0000,0000,0000,,${text}`;
     })
     .join('\n')}

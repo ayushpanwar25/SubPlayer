@@ -321,10 +321,10 @@ export default React.memo(
 
                                     <div
                                         className="sub-text"
-                                        title={sub.text}
+                                        title={sub.text2 ? sub.text2 : sub.text}
                                         onMouseDown={(event) => onMouseDown(sub, event)}
                                     >
-                                        {`${sub.text}`.split(/\r?\n/).map((line, index) => (
+                                        {`${sub.text2 ? sub.text2 : sub.text}`.split(/\r?\n/).map((line, index) => (
                                             <p key={index}>{line}</p>
                                         ))}
                                     </div>

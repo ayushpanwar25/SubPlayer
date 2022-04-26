@@ -25,7 +25,7 @@ const Style = styled.div`
         }
 
         .subtitles {
-            width: 250px;
+            width: 400px;
         }
 
         .tool {
@@ -50,6 +50,9 @@ export default function App({ defaultLang }) {
     const [playing, setPlaying] = useState(false);
     const [currentTime, setCurrentTime] = useState(0);
     const [currentIndex, setCurrentIndex] = useState(-1);
+    const [translate, setTranslate] = useState('en');
+    const [youtubeUrl, setYoutubeUrl] = useState('');
+    const [resumed, setResumed] = useState(false);
 
     const newSub = useCallback((item) => new Sub(item), []);
     const hasSub = useCallback((sub) => subtitle.indexOf(sub), [subtitle]);
@@ -162,11 +165,21 @@ export default function App({ defaultLang }) {
             const subs = copySubs();
             const next = subs[index + 1];
             if (!next) return;
-            const merge = newSub({
-                start: sub.start,
-                end: next.end,
-                text: sub.text.trim() + '\n' + next.text.trim(),
-            });
+            let merge;
+            if(sub.text2) {
+                merge = newSub({
+                    start: sub.start,
+                    end: next.end,
+                    text: sub.text.trim() + '\n' + next.text.trim(),
+                    text2: sub.text2.trim() + '\n' + next.text2.trim(),
+                });
+            } else {
+                merge = newSub({
+                    start: sub.start,
+                    end: next.end,
+                    text: sub.text.trim() + '\n' + next.text.trim()
+                });
+            }
             subs[index] = merge;
             subs.splice(index + 1, 1);
             setSubtitle(subs);
@@ -178,32 +191,56 @@ export default function App({ defaultLang }) {
         (sub, start) => {
             const index = hasSub(sub);
             if (index < 0 || !sub.text || !start) return;
+            const text = sub.text2 ? sub.text2 : sub.text;
             const subs = copySubs();
-            const text1 = sub.text.slice(0, start).trim();
-            const text2 = sub.text.slice(start).trim();
-            if (!text1 || !text2) return;
-            const splitDuration = (sub.duration * (start / sub.text.length)).toFixed(3);
+            const textLeft = text.slice(0, start).trim();
+            const textRight = text.slice(start).trim();
+            if (!textLeft || !textRight) return;
+            const splitDuration = (sub.duration * (start / text.length)).toFixed(3);
             if (splitDuration < 0.2 || sub.duration - splitDuration < 0.2) return;
             subs.splice(index, 1);
             const middleTime = DT.d2t(sub.startTime + parseFloat(splitDuration));
-            subs.splice(
-                index,
-                0,
-                newSub({
-                    start: sub.start,
-                    end: middleTime,
-                    text: text1,
-                }),
-            );
-            subs.splice(
-                index + 1,
-                0,
-                newSub({
-                    start: middleTime,
-                    end: sub.end,
-                    text: text2,
-                }),
-            );
+            if(sub.text2) {
+                subs.splice(
+                    index,
+                    0,
+                    newSub({
+                        start: sub.start,
+                        end: middleTime,
+                        text: sub.text,
+                        text2: textLeft,
+                    }),
+                );
+                subs.splice(
+                    index + 1,
+                    0,
+                    newSub({
+                        start: middleTime,
+                        end: sub.end,
+                        text: sub.text,
+                        text2: textRight,
+                    }),
+                );
+            } else {
+                subs.splice(
+                    index,
+                    0,
+                    newSub({
+                        start: sub.start,
+                        end: middleTime,
+                        text: textLeft,
+                    }),
+                );
+                subs.splice(
+                    index + 1,
+                    0,
+                    newSub({
+                        start: middleTime,
+                        end: sub.end,
+                        text: textRight,
+                    }),
+                );
+            }
             setSubtitle(subs);
         },
         [hasSub, copySubs, setSubtitle, newSub],
@@ -248,6 +285,11 @@ export default function App({ defaultLang }) {
 
     useEffect(() => {
         const localSubtitleString = window.localStorage.getItem('subtitle');
+        const localYoutubeString = window.localStorage.getItem('yturl');
+        const localLanguageString = window.localStorage.getItem('lang');
+        if(localSubtitleString || localYoutubeString || localLanguageString) {console.log("resumed");setResumed(true);}
+        if(localYoutubeString) setYoutubeUrl(JSON.parse(localYoutubeString));
+        if(localLanguageString) setTranslate(JSON.parse(localLanguageString));
         const fetchSubtitle = () =>
             fetch('/sample.json')
                 .then((res) => res.json())
@@ -269,7 +311,7 @@ export default function App({ defaultLang }) {
         } else {
             fetchSubtitle();
         }
-    }, [setSubtitleOriginal]);
+    }, [setSubtitleOriginal, setYoutubeUrl, setTranslate, setResumed]);
 
     const props = {
         player,
@@ -290,6 +332,12 @@ export default function App({ defaultLang }) {
         setLoading,
         setProcessing,
         subtitleHistory,
+        translate,
+        setTranslate,
+        youtubeUrl,
+        setYoutubeUrl,
+        resumed,
+        setResumed,
 
         notify,
         newSub,

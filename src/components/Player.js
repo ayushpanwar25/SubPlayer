@@ -11,7 +11,8 @@ const Style = styled.div`
     justify-content: center;
     height: 100%;
     width: 100%;
-    padding: 20% 10%;
+    padding: 5% 5%;
+    flex-direction: column;
 
     .video {
         display: flex;
@@ -30,6 +31,19 @@ const Style = styled.div`
             box-shadow: 0px 5px 25px 5px rgb(0 0 0 / 80%);
             background-color: #000;
             cursor: pointer;
+        }
+
+        .videoPlaceholder {
+            position: fixed;
+            z-index: 20;
+            outline: none;
+            max-height: 40%;
+            width: 620px;
+            background-color: #000000dd;
+            cursor: pointer;
+            padding: 20px;
+            font-size: 1.5em;
+            color: white;
         }
 
         .subtitle {
@@ -135,7 +149,8 @@ export default function Player(props) {
     const onChange = useCallback(
         (event) => {
             props.player.pause();
-            props.updateSub(currentSub, { text: event.target.value });
+            if(currentSub.text2) props.updateSub(currentSub, { text2 : event.target.value });
+            else props.updateSub(currentSub, { text : event.target.value });
             if (event.target.selectionStart) {
                 setInputItemCursor(event.target.selectionStart);
             }
@@ -171,6 +186,10 @@ export default function Player(props) {
     return (
         <Style className="player">
             <div className="video" ref={$player}>
+                {props.resumed &&
+                <div className="videoPlaceholder" onClick={() => props.setResumed(false)}>
+                    Subtitles from previous session found. Please import the video again to retain the subtitles or start afresh by clicking 'Clear' on the right. Click to ignore.
+                </div>}
                 <VideoWrap {...props} />
                 {props.player && currentSub ? (
                     <div className="subtitle">
@@ -181,7 +200,7 @@ export default function Player(props) {
                         ) : null}
                         <TextareaAutosize
                             className={`textarea ${!props.playing ? 'pause' : ''}`}
-                            value={currentSub.text}
+                            value={currentSub.text2 ? currentSub.text2 : currentSub.text}
                             onChange={onChange}
                             onClick={onClick}
                             onFocus={onFocus}

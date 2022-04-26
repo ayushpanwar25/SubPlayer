@@ -88,7 +88,7 @@ export function sub2vtt(sub) {
         'WEBVTT\n\n' +
         sub
             .map((item, index) => {
-                return index + 1 + '\n' + item.start + ' --> ' + item.end + '\n' + item.text;
+                return index + 1 + '\n' + item.start + ' --> ' + item.end + '\n' + (item.text2 ? item.text2 : item.text);
             })
             .join('\n\n')
     );
@@ -97,11 +97,11 @@ export function sub2vtt(sub) {
 export function sub2srt(sub) {
     return sub
         .map((item, index) => {
-            return `${index + 1}\n${item.start.replace('.', ',')} --> ${item.end.replace('.', ',')}\n${item.text}`;
+            return `${index + 1}\n${item.start.replace('.', ',')} --> ${item.end.replace('.', ',')}\n${(item.text2 ? item.text2 : item.text)}`;
         })
         .join('\n\n');
 }
 
 export function sub2txt(sub) {
-    return sub.map((item) => item.text).join('\n\n');
+    return sub.map((item) => item.text2 ? item.text2 : item.text).join('\n\n');
 }

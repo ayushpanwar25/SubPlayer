@@ -53,7 +53,7 @@ export default function ass2vtt(ass) {
             .filter((line) => line)
             .map((line, index) => {
                 if (line) {
-                    return index + 1 + '\n' + line.start + ' --> ' + line.end + '\n' + line.text;
+                    return index + 1 + '\n' + line.start + ' --> ' + line.end + '\n' + (line.text2 ? line.text2 : line.text);
                 } else {
                     return '';
                 }
