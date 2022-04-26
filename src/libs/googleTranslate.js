@@ -33,7 +33,7 @@ export default async function googleTranslate(subtitle = [], lang) {
             if (item) {
                 translate(item.text, lang)
                     .then((text) => {
-                        item.text = text;
+                        item.text2 = text;
                         result.push(item);
                         sleep(100).then(loop);
                     })
