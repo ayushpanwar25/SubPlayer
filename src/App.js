@@ -167,7 +167,7 @@ export default function App({ defaultLang }) {
             const next = subs[index + 1];
             if (!next) return;
             let merge;
-            if(viewEng || !sub.text2) {
+            if(!sub.text2) {
                 merge = newSub({
                     start: sub.start,
                     end: next.end,
