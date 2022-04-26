@@ -1,5 +1,6 @@
 import styled from 'styled-components';
 import React, { useState, useCallback, useEffect } from 'react';
+import { ReactTransliterate } from "react-transliterate";
 import { Table } from 'react-virtualized';
 import unescape from 'lodash/unescape';
 import debounce from 'lodash/debounce';
@@ -18,6 +19,9 @@ const Style = styled.div`
             .item {
                 height: 100%;
                 padding: 5px;
+                display: flex;
+                flex: 1 1 0%;
+                flex-direction: row;
 
                 .textarea {
                     border: none;
@@ -32,6 +36,11 @@ const Style = styled.div`
                     transition: all 0.2s ease;
                     resize: none;
                     outline: none;
+
+                    &.container {
+                        padding: 0;
+                        border: none;
+                    }
 
                     &.highlight {
                         background-color: rgb(0 87 158);
@@ -48,7 +57,7 @@ const Style = styled.div`
     }
 `;
 
-export default function Subtitles({ currentIndex, subtitle, checkSub, player, updateSub }) {
+export default function Subtitles({ currentIndex, subtitle, checkSub, player, updateSub, translate }) {
     const [height, setHeight] = useState(100);
 
     const resize = useCallback(() => {
@@ -68,7 +77,7 @@ export default function Subtitles({ currentIndex, subtitle, checkSub, player, up
         <Style className="subtitles">
             <Table
                 headerHeight={40}
-                width={250}
+                width={400}
                 height={height}
                 rowHeight={80}
                 scrollToIndex={currentIndex}
@@ -107,6 +116,35 @@ export default function Subtitles({ currentIndex, subtitle, checkSub, player, up
                                             text: event.target.value,
                                         });
                                     }}
+                                />
+                                <ReactTransliterate
+                                    renderComponent={(props) => <textarea className={[
+                                        'textarea',
+                                        currentIndex === props.index ? 'highlight' : '',
+                                        checkSub(props.rowData) ? 'illegal' : '',
+                                    ]
+                                        .join(' ')
+                                        .trim()} 
+                                        placeholder="Translate"
+                                        maxLength={200}
+                                        spellCheck={false}
+                                        {...props} />}
+
+                                    containerClassName={[
+                                        'textarea container',
+                                        currentIndex === props.index ? 'highlight' : '',
+                                        checkSub(props.rowData) ? 'illegal' : '',
+                                    ]
+                                        .join(' ')
+                                        .trim()}
+                                    
+                                    value={unescape(props.rowData.text2)}
+                                    onChangeText={(text) => {
+                                        updateSub(props.rowData, {
+                                            text2: text,
+                                        });
+                                    }}
+                                    lang={translate}
                                 />
                             </div>
                         </div>
