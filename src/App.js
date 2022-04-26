@@ -287,7 +287,7 @@ export default function App({ defaultLang }) {
         const localSubtitleString = window.localStorage.getItem('subtitle');
         const localYoutubeString = window.localStorage.getItem('yturl');
         const localLanguageString = window.localStorage.getItem('lang');
-        if(localSubtitleString || localYoutubeString || localLanguageString) {console.log("resumed");setResumed(true);}
+        if(localSubtitleString || localYoutubeString || localLanguageString) setResumed(true);
         if(localYoutubeString) setYoutubeUrl(JSON.parse(localYoutubeString));
         if(localLanguageString) setTranslate(JSON.parse(localLanguageString));
         const fetchSubtitle = () =>

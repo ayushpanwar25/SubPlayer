@@ -289,7 +289,6 @@ export default function Header({
                     level: 'success',
                 });
             } catch (error) {
-                console.log(error);
                 setLoading('');
                 setProcessing(0);
                 notify({
@@ -482,7 +481,6 @@ export default function Header({
                             const file = new File([data], 'subtitle.vtt');
                             file2sub(file)
                             .then((data) => {
-                                console.log(data);
                                 setSubtitle(data);
                             })
                             .catch((err) => {
