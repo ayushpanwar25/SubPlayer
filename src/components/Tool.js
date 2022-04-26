@@ -321,15 +321,15 @@ export default function Header({
             setLoading(t('LOADING_FONT'));
 
             await fs.mkdir('/fonts');
-            const fontExist = await fs.exists('/fonts/NotoSans.ttf');
+            const fontExist = await fs.exists(`/fonts/${translate}.ttf`);
             if (fontExist) {
-                const fontBlob = await fs.readFile('/fonts/NotoSans.ttf');
-                ffmpeg.FS('writeFile', `tmp/Verdana.ttf`, await fetchFile(fontBlob));
+                const fontBlob = await fs.readFile(`/fonts/${translate}.ttf`);
+                ffmpeg.FS('writeFile', `tmp/${translate}.ttf`, await fetchFile(fontBlob));
             } else {
-                const fontUrl = 'https://cdn.jsdelivr.net/gh/payyup/SubPlayer@master/public/NotoSans.ttf';
+                const fontUrl = `https://cdn.jsdelivr.net/gh/payyup/SubPlayer@master/public/${translate}.ttf`;
                 const fontBlob = await fetch(fontUrl).then((res) => res.blob());
-                await fs.writeFile('/fonts/NotoSans.ttf', fontBlob);
-                ffmpeg.FS('writeFile', `tmp/NotoSans.ttf`, await fetchFile(fontBlob));
+                await fs.writeFile(`/fonts/${translate}.ttf`, fontBlob);
+                ffmpeg.FS('writeFile', `tmp/${translate}.ttf`, await fetchFile(fontBlob));
             }
             setLoading(t('LOADING_VIDEO'));
             ffmpeg.FS(
@@ -371,7 +371,7 @@ export default function Header({
                 level: 'error',
             });
         }
-    }, [notify, setProcessing, setLoading, videoFile, subtitle, viewEng]);
+    }, [notify, setProcessing, setLoading, videoFile, subtitle, viewEng, translate]);
 
     const onVideoChange = useCallback(
         (event) => {
