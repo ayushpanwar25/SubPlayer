@@ -14,7 +14,7 @@ const toSubTime = (str) => {
     return n.slice(0, 3).join(':') + '.' + n[3];
 };
 
-export default function sub2ass(sub) {
+export default function sub2ass(sub, viewEng) {
     return `
 [Script Info]
 ;
@@ -32,7 +32,7 @@ ${sub
     .map((item) => {
         const start = toSubTime(item.start);
         const end = toSubTime(item.end);
-        const text = (item.text2 ? item.text2 : item.text).replace(/\r?\n/g, '\\N');
+        const text = ((viewEng || !item.text2) ? item.text : item.text2).replace(/\r?\n/g, '\\N');
         return `Dialogue: 0,${start},${end},Default,NTP,0000,0000,0000,,${text}`;
     })
     .join('\n')}

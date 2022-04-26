@@ -31,9 +31,9 @@ const Timeline = styled.div`
 
     .sub-item {
         position: absolute;
-        top: 30%;
+        top: 25%;
         left: 0;
-        height: 40%;
+        height: 50%;
         overflow: hidden;
         display: flex;
         justify-content: center;
@@ -138,7 +138,7 @@ let lastDiffX = 0;
 let isDroging = false;
 
 export default React.memo(
-    function ({ player, subtitle, render, currentTime, checkSub, removeSub, hasSub, updateSub, mergeSub }) {
+    function ({ player, subtitle, render, currentTime, checkSub, removeSub, hasSub, updateSub, mergeSub, viewEng }) {
         const $blockRef = React.createRef();
         const $subsRef = React.createRef();
         const currentSubs = getCurrentSubs(subtitle, render.beginTime, render.duration);
@@ -321,10 +321,10 @@ export default React.memo(
 
                                     <div
                                         className="sub-text"
-                                        title={sub.text2 ? sub.text2 : sub.text}
+                                        title={(viewEng || !sub.text2) ? sub.text : sub.text2}
                                         onMouseDown={(event) => onMouseDown(sub, event)}
                                     >
-                                        {`${sub.text2 ? sub.text2 : sub.text}`.split(/\r?\n/).map((line, index) => (
+                                        {`${((viewEng || !sub.text2) ? sub.text : sub.text2)}`.split(/\r?\n/).map((line, index) => (
                                             <p key={index}>{line}</p>
                                         ))}
                                     </div>

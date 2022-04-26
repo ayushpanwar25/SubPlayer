@@ -53,6 +53,7 @@ export default function App({ defaultLang }) {
     const [translate, setTranslate] = useState('en');
     const [youtubeUrl, setYoutubeUrl] = useState('');
     const [resumed, setResumed] = useState(false);
+    const [viewEng, setViewEng] = useState(true);
 
     const newSub = useCallback((item) => new Sub(item), []);
     const hasSub = useCallback((sub) => subtitle.indexOf(sub), [subtitle]);
@@ -338,6 +339,8 @@ export default function App({ defaultLang }) {
         setYoutubeUrl,
         resumed,
         setResumed,
+        viewEng,
+        setViewEng,
 
         notify,
         newSub,

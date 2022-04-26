@@ -111,6 +111,15 @@ const Style = styled.div`
         }
     }
 
+    .toggle {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 10px; 
+        padding: 10px;
+        border-bottom: 1px solid rgb(255 255 255 / 20%);
+    }
+
     .operate {
         display: flex;
         justify-content: space-between;
@@ -259,6 +268,8 @@ export default function Header({
     setYoutubeUrl,
     resumed,
     setResumed,
+    viewEng,
+    setViewEng,
 }) {
     const [tempTranslate, setTempTranslate] = useState(translate);
     const [videoFile, setVideoFile] = useState(null);
@@ -327,7 +338,7 @@ export default function Header({
                 await fetchFile(videoFile || 'sample.mp4'),
             );
             setLoading(t('LOADING_SUB'));
-            const subtitleFile = new File([new Blob([sub2ass(subtitle)])], 'subtitle.ass');
+            const subtitleFile = new File([new Blob([sub2ass(subtitle, viewEng)])], 'subtitle.ass');
             ffmpeg.FS('writeFile', subtitleFile.name, await fetchFile(subtitleFile));
             setLoading('');
             notify({
@@ -360,7 +371,7 @@ export default function Header({
                 level: 'error',
             });
         }
-    }, [notify, setProcessing, setLoading, videoFile, subtitle]);
+    }, [notify, setProcessing, setLoading, videoFile, subtitle, viewEng]);
 
     const onVideoChange = useCallback(
         (event) => {
@@ -526,16 +537,16 @@ export default function Header({
             const name = `${Date.now()}.${type}`;
             switch (type) {
                 case 'vtt':
-                    text = sub2vtt(subtitle);
+                    text = sub2vtt(subtitle, viewEng);
                     break;
                 case 'srt':
-                    text = sub2srt(subtitle);
+                    text = sub2srt(subtitle, viewEng);
                     break;
                 case 'ass':
-                    text = sub2ass(subtitle);
+                    text = sub2ass(subtitle, viewEng);
                     break;
                 case 'txt':
-                    text = sub2txt(subtitle);
+                    text = sub2txt(subtitle, viewEng);
                     break;
                 case 'json':
                     text = JSON.stringify(subtitle);
@@ -546,7 +557,7 @@ export default function Header({
             const url = URL.createObjectURL(new Blob([text]));
             download(url, name);
         },
-        [subtitle],
+        [subtitle, viewEng],
     );
 
     const onTranslate = useCallback(() => {
@@ -598,6 +609,10 @@ export default function Header({
                         </div>
                     </div>
                 ) : null}
+                 <div className="toggle">
+                    <label>Use Translated subtitles?</label>
+                    <input type="checkbox" onChange={() => {setViewEng(!viewEng)}} autocomplete="off"/>
+                </div>
                 <div className="export">
                     <div className="btn" onClick={() => downloadSub('ass')}>
                         <Translate value="EXPORT_ASS" />
@@ -650,7 +665,7 @@ export default function Header({
                 </div>
             </div>
             <div className="bottom">
-                Modified for AI4Bharat by Ayush Panwar
+                Modified by Ayush Panwar
             </div>
         </Style>
     );

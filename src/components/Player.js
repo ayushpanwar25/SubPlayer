@@ -149,8 +149,8 @@ export default function Player(props) {
     const onChange = useCallback(
         (event) => {
             props.player.pause();
-            if(currentSub.text2) props.updateSub(currentSub, { text2 : event.target.value });
-            else props.updateSub(currentSub, { text : event.target.value });
+            if(props.viewEng) props.updateSub(currentSub, { text : event.target.value });
+            else props.updateSub(currentSub, { text2 : event.target.value });
             if (event.target.selectionStart) {
                 setInputItemCursor(event.target.selectionStart);
             }
@@ -200,7 +200,7 @@ export default function Player(props) {
                         ) : null}
                         <TextareaAutosize
                             className={`textarea ${!props.playing ? 'pause' : ''}`}
-                            value={currentSub.text2 ? currentSub.text2 : currentSub.text}
+                            value={props.viewEng ? currentSub.text : currentSub.text2}
                             onChange={onChange}
                             onClick={onClick}
                             onFocus={onFocus}
