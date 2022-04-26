@@ -185,7 +185,7 @@ export default function App({ defaultLang }) {
             subs.splice(index + 1, 1);
             setSubtitle(subs);
         },
-        [hasSub, copySubs, setSubtitle, newSub, viewEng],
+        [hasSub, copySubs, setSubtitle, newSub],
     );
 
     const splitSub = useCallback(
