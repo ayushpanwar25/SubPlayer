@@ -167,32 +167,32 @@ export default function App({ defaultLang }) {
             const next = subs[index + 1];
             if (!next) return;
             let merge;
-            if(sub.text2) {
+            if(viewEng || !sub.text2) {
+                merge = newSub({
+                    start: sub.start,
+                    end: next.end,
+                    text: sub.text.trim() + '\n' + next.text.trim(),
+                });
+            } else {
                 merge = newSub({
                     start: sub.start,
                     end: next.end,
                     text: sub.text.trim() + '\n' + next.text.trim(),
                     text2: sub.text2.trim() + '\n' + next.text2.trim(),
                 });
-            } else {
-                merge = newSub({
-                    start: sub.start,
-                    end: next.end,
-                    text: sub.text.trim() + '\n' + next.text.trim()
-                });
             }
             subs[index] = merge;
             subs.splice(index + 1, 1);
             setSubtitle(subs);
         },
-        [hasSub, copySubs, setSubtitle, newSub],
+        [hasSub, copySubs, setSubtitle, newSub, viewEng],
     );
 
     const splitSub = useCallback(
         (sub, start) => {
             const index = hasSub(sub);
             if (index < 0 || !sub.text || !start) return;
-            const text = sub.text2 ? sub.text2 : sub.text;
+            const text = (viewEng || !sub.text2) ? sub.text : sub.text2;
             const subs = copySubs();
             const textLeft = text.slice(0, start).trim();
             const textRight = text.slice(start).trim();
@@ -201,7 +201,28 @@ export default function App({ defaultLang }) {
             if (splitDuration < 0.2 || sub.duration - splitDuration < 0.2) return;
             subs.splice(index, 1);
             const middleTime = DT.d2t(sub.startTime + parseFloat(splitDuration));
-            if(sub.text2) {
+            if(viewEng || !sub.text2) {
+                subs.splice(
+                    index,
+                    0,
+                    newSub({
+                        start: sub.start,
+                        end: middleTime,
+                        text: textLeft,
+                        text2: (sub.text2 ? sub.text2 : '')
+                    }),
+                );
+                subs.splice(
+                    index + 1,
+                    0,
+                    newSub({
+                        start: middleTime,
+                        end: sub.end,
+                        text: textRight,
+                        text2: (sub.text2 ? sub.text2 : '')
+                    }),
+                );
+            } else {
                 subs.splice(
                     index,
                     0,
@@ -222,29 +243,10 @@ export default function App({ defaultLang }) {
                         text2: textRight,
                     }),
                 );
-            } else {
-                subs.splice(
-                    index,
-                    0,
-                    newSub({
-                        start: sub.start,
-                        end: middleTime,
-                        text: textLeft,
-                    }),
-                );
-                subs.splice(
-                    index + 1,
-                    0,
-                    newSub({
-                        start: middleTime,
-                        end: sub.end,
-                        text: textRight,
-                    }),
-                );
             }
             setSubtitle(subs);
         },
-        [hasSub, copySubs, setSubtitle, newSub],
+        [hasSub, copySubs, setSubtitle, newSub, viewEng],
     );
 
     const onKeyDown = useCallback(
