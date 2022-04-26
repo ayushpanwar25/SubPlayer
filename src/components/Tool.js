@@ -237,7 +237,7 @@ const Style = styled.div`
     }
 `;
 
-FFmpeg.createFFmpeg({ log: true }).load();
+FFmpeg.createFFmpeg({ log: true, corePath: "https://unpkg.com/@ffmpeg/core@0.10.0/dist/ffmpeg-core.js" }).load();
 const fs = new SimpleFS.FileSystem();
 
 export default function Header({
@@ -253,15 +253,21 @@ export default function Header({
     setSubtitle,
     setProcessing,
     notify,
+    translate,
+    setTranslate,
+    youtubeUrl,
+    setYoutubeUrl,
+    resumed,
+    setResumed,
 }) {
-    const [translate, setTranslate] = useState('en');
+    const [tempTranslate, setTempTranslate] = useState(translate);
     const [videoFile, setVideoFile] = useState(null);
 
     const decodeAudioData = useCallback(
         async (file) => {
             try {
                 const { createFFmpeg, fetchFile } = FFmpeg;
-                const ffmpeg = createFFmpeg({ log: true });
+                const ffmpeg = createFFmpeg({ log: true, corePath: "https://unpkg.com/@ffmpeg/core@0.10.0/dist/ffmpeg-core.js" });
                 ffmpeg.setProgress(({ ratio }) => setProcessing(ratio * 100));
                 setLoading(t('LOADING_FFMPEG'));
                 await ffmpeg.load();
@@ -274,7 +280,6 @@ export default function Header({
                 const output = `${Date.now()}.mp3`;
                 await ffmpeg.run('-i', file.name, '-ac', '1', '-ar', '8000', output);
                 const uint8 = ffmpeg.FS('readFile', output);
-                // download(URL.createObjectURL(new Blob([uint8])), `${output}`);
                 await waveform.decoder.decodeAudioData(uint8);
                 waveform.drawer.update();
                 setProcessing(0);
@@ -284,6 +289,7 @@ export default function Header({
                     level: 'success',
                 });
             } catch (error) {
+                console.log(error);
                 setLoading('');
                 setProcessing(0);
                 notify({
@@ -298,7 +304,7 @@ export default function Header({
     const burnSubtitles = useCallback(async () => {
         try {
             const { createFFmpeg, fetchFile } = FFmpeg;
-            const ffmpeg = createFFmpeg({ log: true });
+            const ffmpeg = createFFmpeg({ log: true, corePath: "https://unpkg.com/@ffmpeg/core@0.10.0/dist/ffmpeg-core.js" });
             ffmpeg.setProgress(({ ratio }) => setProcessing(ratio * 100));
             setLoading(t('LOADING_FFMPEG'));
             await ffmpeg.load();
@@ -372,6 +378,7 @@ export default function Header({
                     waveform.seek(0);
                     player.currentTime = 0;
                     clearSubs();
+                    setResumed(false);
                     setSubtitle([
                         newSub({
                             start: '00:00:00.000',
@@ -388,7 +395,7 @@ export default function Header({
                 }
             }
         },
-        [newSub, notify, player, setSubtitle, waveform, clearSubs, decodeAudioData],
+        [newSub, notify, player, setSubtitle, waveform, clearSubs, decodeAudioData, setResumed],
     );
 
     const onSubtitleChange = useCallback(
@@ -417,6 +424,98 @@ export default function Header({
             }
         },
         [notify, setSubtitle, clearSubs],
+    );
+
+    const onYoutubeChange = useCallback(
+        async () => {
+            setLoading(t('LOADING_VIDEO'));
+            const baseUrl = "https://youtube-dl-utils-api.herokuapp.com/get_youtube_video_link_with_captions";
+            const encodedUrl = encodeURIComponent(youtubeUrl);
+            const res = await fetch(`${baseUrl}?url=${encodedUrl}&lang=en`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then((res) => res.json())
+            .catch((err) => {
+                notify({
+                    message: "Server Error",
+                    level: 'error',
+                });
+            });
+            if (res) {
+                await fetch(res.video, {
+                    mode: 'cors',
+                })
+                .then(function(res) {
+                    return res.blob();
+                })
+                .then(function(blob) {
+                    const file = new File([blob], 'video.mp4');
+                    setVideoFile(file);
+                    decodeAudioData(file);
+                    const url = URL.createObjectURL(blob);
+                    waveform.decoder.destroy();
+                    waveform.drawer.update();
+                    waveform.seek(0);
+                    player.currentTime = 0;
+                    player.src = url;
+                    setLoading('');
+                    setResumed(false);
+                    window.localStorage.setItem('yturl', JSON.stringify(youtubeUrl));
+                })
+                .catch((err) => {
+                    notify({
+                        message: "Error fetching video",
+                        level: 'error',
+                    });
+                });
+                if(!resumed) {
+                    clearSubs();
+                    if(res.subtitles) {
+                        await fetch(res.subtitles)
+                        .then(function(res) {
+                            return res.blob();
+                        })
+                        .then((data) => {
+                            const file = new File([data], 'subtitle.vtt');
+                            file2sub(file)
+                            .then((data) => {
+                                console.log(data);
+                                setSubtitle(data);
+                            })
+                            .catch((err) => {
+                                notify({
+                                    message: err.message,
+                                    level: 'error',
+                                });
+                            });
+                        })
+                        .catch((err) => {
+                            notify({
+                                message: "Error fetching subtitles",
+                                level: 'error',
+                            });
+                        });
+                    } else {
+                        setSubtitle([
+                            newSub({
+                                start: '00:00:00.000',
+                                end: '00:00:01.000',
+                                text: t('SUB_TEXT'),
+                            }),
+                        ]);
+                    }
+                }
+            } else {
+                notify({
+                    message: "Server error",
+                    level: 'error',
+                });
+            }
+        },
+        [newSub, notify, player, setSubtitle, setLoading, waveform, clearSubs, decodeAudioData, youtubeUrl, resumed, setResumed],
     );
 
     const onInputClick = useCallback((event) => {
@@ -453,8 +552,10 @@ export default function Header({
     );
 
     const onTranslate = useCallback(() => {
+        window.localStorage.setItem('lang', JSON.stringify(tempTranslate));
+        setTranslate(tempTranslate);
         setLoading(t('TRANSLATING'));
-        googleTranslate(formatSub(subtitle), translate)
+        googleTranslate(formatSub(subtitle), tempTranslate)
             .then((res) => {
                 setLoading('');
                 setSubtitle(formatSub(res));
@@ -470,7 +571,7 @@ export default function Header({
                     level: 'error',
                 });
             });
-    }, [subtitle, setLoading, formatSub, setSubtitle, translate, notify]);
+    }, [subtitle, setLoading, formatSub, setSubtitle, tempTranslate, setTranslate, notify]);
 
     return (
         <Style className="tool">
@@ -483,6 +584,13 @@ export default function Header({
                     <div className="btn">
                         <Translate value="OPEN_SUB" />
                         <input className="file" type="file" onChange={onSubtitleChange} onClick={onInputClick} />
+                    </div>
+                    
+                </div>
+                <div className="import">
+                    <input type="text" value={youtubeUrl} placeholder='Enter Youtube Link' onChange={(event) => {setYoutubeUrl(event.target.value)}} />
+                    <div className="btn" onClick={onYoutubeChange}>
+                        <Translate value="OPEN_YT" />
                     </div>
                 </div>
                 {window.crossOriginIsolated ? (
@@ -509,6 +617,9 @@ export default function Header({
                         onClick={() => {
                             if (window.confirm(t('CLEAR_TIP')) === true) {
                                 clearSubs();
+                                window.localStorage.removeItem('yturl');
+                                window.localStorage.removeItem('lang');
+                                window.localStorage.removeItem('subtitle');
                                 window.location.reload();
                             }
                         }}
@@ -520,7 +631,7 @@ export default function Header({
                     </div>
                 </div>
                 <div className="translate">
-                    <select value={translate} onChange={(event) => setTranslate(event.target.value)}>
+                    <select value={tempTranslate} onChange={(event) => setTempTranslate(event.target.value)}>
                         {(languages[language] || languages.en).map((item) => (
                             <option key={item.key} value={item.key}>
                                 {item.name}
@@ -541,10 +652,7 @@ export default function Header({
                 </div>
             </div>
             <div className="bottom">
-                <a href="https://online.aimu-app.com/">
-                    <div className="title">全新字幕编辑器来了，点击这里体验</div>
-                    <img src="/aimu.png" alt="aimu" />
-                </a>
+                Modified for AI4Bharat by Ayush Panwar
             </div>
         </Style>
     );
