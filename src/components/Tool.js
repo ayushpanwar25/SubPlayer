@@ -321,15 +321,16 @@ export default function Header({
             setLoading(t('LOADING_FONT'));
 
             await fs.mkdir('/fonts');
-            const fontExist = await fs.exists(`/fonts/${translate}.ttf`);
+            const tran = viewEng ? 'NotoSans' : translate;
+            const fontExist = await fs.exists(`/fonts/${tran}.ttf`);
             if (fontExist) {
-                const fontBlob = await fs.readFile(`/fonts/${translate}.ttf`);
-                ffmpeg.FS('writeFile', `tmp/${translate}.ttf`, await fetchFile(fontBlob));
+                const fontBlob = await fs.readFile(`/fonts/${tran}.ttf`);
+                ffmpeg.FS('writeFile', `tmp/${tran}.ttf`, await fetchFile(fontBlob));
             } else {
-                const fontUrl = `https://cdn.jsdelivr.net/gh/payyup/SubPlayer@master/public/${translate}.ttf`;
+                const fontUrl = `https://cdn.jsdelivr.net/gh/payyup/SubPlayer@master/public/${tran}.ttf`;
                 const fontBlob = await fetch(fontUrl).then((res) => res.blob());
-                await fs.writeFile(`/fonts/${translate}.ttf`, fontBlob);
-                ffmpeg.FS('writeFile', `tmp/${translate}.ttf`, await fetchFile(fontBlob));
+                await fs.writeFile(`/fonts/${tran}.ttf`, fontBlob);
+                ffmpeg.FS('writeFile', `/tmp/${tran}.ttf`, await fetchFile(fontBlob));
             }
             setLoading(t('LOADING_VIDEO'));
             ffmpeg.FS(
@@ -338,7 +339,7 @@ export default function Header({
                 await fetchFile(videoFile || 'sample.mp4'),
             );
             setLoading(t('LOADING_SUB'));
-            const subtitleFile = new File([new Blob([sub2ass(subtitle, viewEng)])], 'subtitle.ass');
+            const subtitleFile = new File([new Blob([sub2ass(subtitle, viewEng, translate)])], 'subtitle.ass');
             ffmpeg.FS('writeFile', subtitleFile.name, await fetchFile(subtitleFile));
             setLoading('');
             notify({
