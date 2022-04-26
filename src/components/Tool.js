@@ -311,15 +311,15 @@ export default function Header({
             setLoading(t('LOADING_FONT'));
 
             await fs.mkdir('/fonts');
-            const fontExist = await fs.exists('/fonts/Microsoft-YaHei.ttf');
+            const fontExist = await fs.exists('/fonts/Verdana.ttf');
             if (fontExist) {
-                const fontBlob = await fs.readFile('/fonts/Microsoft-YaHei.ttf');
-                ffmpeg.FS('writeFile', `tmp/Microsoft-YaHei.ttf`, await fetchFile(fontBlob));
+                const fontBlob = await fs.readFile('/fonts/Verdana.ttf');
+                ffmpeg.FS('writeFile', `tmp/Verdana.ttf`, await fetchFile(fontBlob));
             } else {
-                const fontUrl = 'https://cdn.jsdelivr.net/gh/zhw2590582/SubPlayer/docs/Microsoft-YaHei.ttf';
+                const fontUrl = 'https://cdn.jsdelivr.net/gh/payyup/SubPlayer/public/Verdana.ttf';
                 const fontBlob = await fetch(fontUrl).then((res) => res.blob());
-                await fs.writeFile('/fonts/Microsoft-YaHei.ttf', fontBlob);
-                ffmpeg.FS('writeFile', `tmp/Microsoft-YaHei.ttf`, await fetchFile(fontBlob));
+                await fs.writeFile('/fonts/Verdana.ttf', fontBlob);
+                ffmpeg.FS('writeFile', `tmp/Verdana.ttf`, await fetchFile(fontBlob));
             }
             setLoading(t('LOADING_VIDEO'));
             ffmpeg.FS(

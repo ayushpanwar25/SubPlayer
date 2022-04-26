@@ -1,7 +1,7 @@
 {
   "name": "subplayer",
   "version": "3.0.0",
-  "homepage": "https://payyup.github.io/react-gh-pages",
+  "homepage": "https://payyup.github.io/SubPlayer",
   "private": true,
   "dependencies": {
     "@ffmpeg/ffmpeg": "^0.10.1",
@@ -27,7 +27,7 @@
     "predeploy": "npm run build",
     "deploy": "gh-pages -d build",
     "start": "react-scripts start",
-    "build": "react-scripts build && rm -rf docs && mv build docs"
+    "build": "react-scripts build"
   },
   "eslintConfig": {
     "extends": [
