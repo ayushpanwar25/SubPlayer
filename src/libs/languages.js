@@ -1,7 +1,7 @@
 // https://cloud.google.com/translate/docs/languages
 
 const en = [
-    //{ name: 'English', key: 'en' },
+    { name: 'English', key: 'en' },
     { name: 'Bengali', key: 'bn' },
     { name: 'Gujarati', key: 'gu' },
     { name: 'Hindi', key: 'hi' },

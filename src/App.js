@@ -50,8 +50,7 @@ export default function App({ defaultLang }) {
     const [playing, setPlaying] = useState(false);
     const [currentTime, setCurrentTime] = useState(0);
     const [currentIndex, setCurrentIndex] = useState(-1);
-    const [translate, setTranslate] = useState('bn');
-    const [youtubeUrl, setYoutubeUrl] = useState('');
+    const [translate, setTranslate] = useState('en');
     const [directUrl, setDirectUrl] = useState(null);
     const [viewEng, setViewEng] = useState(true);
 
@@ -313,7 +312,7 @@ export default function App({ defaultLang }) {
         } else {
             fetchSubtitle();
         }
-    }, [setSubtitleOriginal, setYoutubeUrl, setDirectUrl, directUrl, setTranslate, player]);
+    }, [setSubtitleOriginal, setDirectUrl, setTranslate]);
 
     const props = {
         player,
@@ -336,8 +335,6 @@ export default function App({ defaultLang }) {
         subtitleHistory,
         translate,
         setTranslate,
-        youtubeUrl,
-        setYoutubeUrl,
         directUrl,
         setDirectUrl,
         viewEng,

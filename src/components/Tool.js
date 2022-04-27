@@ -264,8 +264,6 @@ export default function Header({
     notify,
     translate,
     setTranslate,
-    youtubeUrl,
-    setYoutubeUrl,
     directUrl,
     setDirectUrl,
     viewEng,
@@ -273,6 +271,7 @@ export default function Header({
 }) {
     const [tempTranslate, setTempTranslate] = useState(translate);
     const [videoFile, setVideoFile] = useState(null);
+    const [youtubeUrl, setYoutubeUrl] = useState('');
 
     const decodeAudioData = useCallback(
         async (file) => {
@@ -455,33 +454,6 @@ export default function Header({
                 });
             });
             if (res) {
-                player.currentTime = 0;
-                player.src = res.video;
-                setLoading('');
-                setDirectUrl(res.video);
-                window.localStorage.setItem('directUrl', JSON.stringify(res.video));
-                await fetch(res.video, {
-                    mode: 'cors',
-                })
-                .then(function(res) {
-                    return res.blob();
-                })
-                .then(function(blob) {
-                    const file = new File([blob], 'video.mp4');
-                    setVideoFile(file);
-                    decodeAudioData(file);
-                    const url = URL.createObjectURL(blob);
-                    waveform.decoder.destroy();
-                    waveform.drawer.update();
-                    waveform.seek(0);
-                    player.src = url;
-                })
-                .catch((err) => {
-                    notify({
-                        message: "Error downloading video (likely CORS issue)",
-                        level: 'error',
-                    });
-                });
                 clearSubs();
                 if(res.subtitles) {
                     setLoading(t('LOADING_SUB'));
@@ -518,6 +490,33 @@ export default function Header({
                         }),
                     ]);
                 }
+                player.currentTime = 0;
+                player.src = res.video;
+                setLoading('');
+                setDirectUrl(res.video);
+                window.localStorage.setItem('directUrl', JSON.stringify(res.video));
+                await fetch(res.video, {
+                    mode: 'cors',
+                })
+                .then(function(res) {
+                    return res.blob();
+                })
+                .then(function(blob) {
+                    const file = new File([blob], 'video.mp4');
+                    setVideoFile(file);
+                    decodeAudioData(file);
+                    const url = URL.createObjectURL(blob);
+                    waveform.decoder.destroy();
+                    waveform.drawer.update();
+                    waveform.seek(0);
+                    player.src = url;
+                })
+                .catch((err) => {
+                    notify({
+                        message: "Error downloading video (likely CORS issue)",
+                        level: 'error',
+                    });
+                });
             } else {
                 notify({
                     message: "Server error",
@@ -586,10 +585,9 @@ export default function Header({
     useEffect(() => {
         async function loadVideo() {
             if(directUrl) {
-                if(waveform) waveform.decoder.destroy();
+                setVideoFile(null);
                 player.currentTime = 0;
                 player.src = directUrl;
-                setLoading('');
                 await fetch(directUrl, {
                     mode: 'cors',
                 })
@@ -599,10 +597,7 @@ export default function Header({
                 .then(function(blob) {
                     const file = new File([blob], 'video.mp4');
                     setVideoFile(file);
-                    decodeAudioData(file);
                     const url = URL.createObjectURL(blob);
-                    waveform.drawer.update();
-                    waveform.seek(0);
                     player.src = url;
                 })
                 .catch(() => {
@@ -614,7 +609,7 @@ export default function Header({
             }
         }
         loadVideo();
-    }, [newSub, notify, player, setSubtitle, setLoading, waveform, clearSubs, decodeAudioData, directUrl]);
+    }, [notify, player, directUrl]);
 
     return (
         <Style className="tool">
@@ -645,7 +640,7 @@ export default function Header({
                 ) : null}
                  <div className="toggle">
                     <label>Use Translated subtitles?</label>
-                    <input type="checkbox" onChange={() => {setViewEng(!viewEng)}} autocomplete="off"/>
+                    <input type="checkbox" onChange={() => {setViewEng(!viewEng)}} autoComplete="off"/>
                 </div>
                 <div className="export">
                     <div className="btn" onClick={() => downloadSub('ass')}>
@@ -664,9 +659,7 @@ export default function Header({
                         onClick={() => {
                             if (window.confirm(t('CLEAR_TIP')) === true) {
                                 clearSubs();
-                                window.localStorage.removeItem('directUrl');
-                                window.localStorage.removeItem('lang');
-                                window.localStorage.removeItem('subtitle');
+                                localStorage.clear()
                                 window.location.reload();
                             }
                         }}

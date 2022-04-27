@@ -1,6 +1,7 @@
 import React, { useState, useEffect, createRef, useCallback, useMemo, memo } from 'react';
 import TextareaAutosize from 'react-textarea-autosize';
 import { Translate } from 'react-i18nify';
+import { ReactTransliterate } from "react-transliterate";
 import styled from 'styled-components';
 import backlight from '../libs/backlight';
 import { isPlaying } from '../utils';
@@ -93,6 +94,18 @@ const Style = styled.div`
                     background-color: rgb(0 0 0 / 50%);
                 }
             }
+
+            .container ul {
+                padding: 0;
+                z-index: 100;
+                background-color: rgb(32, 32, 32);
+
+                li:first-of-type {
+                    font-weight: bold;
+                    color: white;
+                    background-color: rgb(0 87 158);
+                }
+            } 
         }
     }
 `;
@@ -146,14 +159,21 @@ export default function Player(props) {
         setCurrentSub(props.subtitle[props.currentIndex]);
     }, [props.subtitle, props.currentIndex]);
 
-    const onChange = useCallback(
+    const onChangeEng = useCallback(
         (event) => {
             props.player.pause();
-            if(props.viewEng) props.updateSub(currentSub, { text : event.target.value });
-            else props.updateSub(currentSub, { text2 : event.target.value });
+            props.updateSub(currentSub, { text : event.target.value });
             if (event.target.selectionStart) {
                 setInputItemCursor(event.target.selectionStart);
             }
+        },
+        [props, currentSub],
+    );
+
+    const onChangeTran = useCallback(
+        (text) => {
+            props.player.pause();
+            props.updateSub(currentSub, { text2 : text });
         },
         [props, currentSub],
     );
@@ -194,16 +214,38 @@ export default function Player(props) {
                                 <Translate value="SPLIT" />
                             </div>
                         ) : null}
-                        <TextareaAutosize
+                        {props.viewEng ? (
+                            <TextareaAutosize
                             className={`textarea ${!props.playing ? 'pause' : ''}`}
-                            value={props.viewEng ? currentSub.text : currentSub.text2}
-                            onChange={onChange}
+                            value={currentSub.text}
+                            onChange={onChangeEng}
                             onClick={onClick}
                             onFocus={onFocus}
                             onBlur={onBlur}
                             onKeyDown={onFocus}
                             spellCheck={false}
                         />
+                        ) : (
+                            <ReactTransliterate
+                                    renderComponent={(props) => 
+                                        <TextareaAutosize 
+                                            className={`textarea ${!props.playing ? 'pause' : ''}`}
+                                            onClick={onClick}
+                                            onFocus={onFocus}
+                                            onBlur={onBlur}
+                                            onKeyDown={onFocus}
+                                            spellCheck={false}
+                                            {...props}
+                                        />}
+                                    value={currentSub.text2}
+                                    containerClassName={[
+                                        'container']
+                                        .join(' ')
+                                        .trim()}
+                                    onChangeText={onChangeTran}
+                                    lang={props.translate}
+                                />
+                        )}                        
                     </div>
                 ) : null}
             </div>

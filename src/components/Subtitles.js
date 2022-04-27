@@ -37,15 +37,10 @@ const Style = styled.div`
                     resize: none;
                     outline: none;
 
-                    &.container {
-                        padding: 0;
-                        border: none;
-                        z-index: 100;
-                    }
-
                     &.highlight {
                         background-color: rgb(0 87 158);
                         border: 1px solid rgba(255, 255, 255, 0.3);
+                        z-index: 100;
                     }
 
                     &.illegal {
@@ -53,7 +48,22 @@ const Style = styled.div`
                         border: 1px solid rgba(255, 255, 255, 0.3);
                     }
                 }
+
+                .container ul {
+                    padding: 0;
+                    z-index: 100;
+                    background-color: rgb(32, 32, 32);
+                    margin-left: -50px;
+
+                    li:first-of-type {
+                        font-weight: bold;
+                        color: white;
+                        background-color: rgb(0 87 158);
+                    }
+                }                
             }
+
+            overflow: visible !important;
         }
     }
 `;
@@ -119,26 +129,19 @@ export default function Subtitles({ currentIndex, subtitle, checkSub, player, up
                                     }}
                                 />
                                 <ReactTransliterate
-                                    renderComponent={(props) => <textarea className={[
+                                    renderComponent={(props) => <textarea {...props} />}
+                                    maxLength={200}
+                                    spellCheck={false}
+                                    containerClassName="container"
+                                    containerStyles={{width: '100%'}}
+                                    className={[
                                         'textarea',
                                         currentIndex === props.index ? 'highlight' : '',
                                         checkSub(props.rowData) ? 'illegal' : '',
                                     ]
                                         .join(' ')
-                                        .trim()} 
-                                        placeholder="Translate"
-                                        maxLength={200}
-                                        spellCheck={false}
-                                        {...props} />}
-
-                                    containerClassName={[
-                                        'textarea container',
-                                        currentIndex === props.index ? 'highlight' : '',
-                                        checkSub(props.rowData) ? 'illegal' : '',
-                                    ]
-                                        .join(' ')
                                         .trim()}
-                                    
+                                    placeholder="Translate"
                                     value={unescape(props.rowData.text2)}
                                     onChangeText={(text) => {
                                         updateSub(props.rowData, {
