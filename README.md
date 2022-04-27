@@ -14,7 +14,7 @@ This is a fork of SubPlayer with added support for YouTube, Indic languages with
 * Please wait for the sample video and subtitles to load from Vercel servers upon first visit.
 
 * Select a language and click "Translation" from the right menu to translate from English and toggle it by using the "Use translated subtitles?" checkbox. The selected language is then used for editing and export.
-   * If translated subs do not exist, English subs will be used upon export even if the box is checked.
+  * If translated subs do not exist, English subs will be used upon export even if the box is checked.
 
 * Enter YouTube link and click on "Import YouTube" to fetch a video from YouTube along with its eng captions.
 
@@ -24,6 +24,9 @@ This is a fork of SubPlayer with added support for YouTube, Indic languages with
 * If "Error downloading video" pop-up is displayed, the extension is probably not enabled.
 
 * Video cannot be exported until it's completely downloaded in the background.
+
+* The site is reloaded upon successful video export to clear MEMFS and prevent memory leak.
+  * This causes the YouTube video to reload upon every video export.
 
 * Persisted YouTube videos must be reimported to generate their waveforms. 
 
