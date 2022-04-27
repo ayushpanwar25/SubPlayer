@@ -272,6 +272,7 @@ export default function Header({
     const [tempTranslate, setTempTranslate] = useState(translate);
     const [videoFile, setVideoFile] = useState(null);
     const [youtubeUrl, setYoutubeUrl] = useState('');
+    const [exportReady, setExportReady] = useState(false);
 
     const decodeAudioData = useCallback(
         async (file) => {
@@ -311,67 +312,74 @@ export default function Header({
     );
 
     const burnSubtitles = useCallback(async () => {
-        try {
-            const { createFFmpeg, fetchFile } = FFmpeg;
-            const ffmpeg = createFFmpeg({ log: true });
-            ffmpeg.setProgress(({ ratio }) => setProcessing(ratio * 100));
-            setLoading(t('LOADING_FFMPEG'));
-            await ffmpeg.load();
-            setLoading(t('LOADING_FONT'));
+        if(exportReady) {
+            try {
+                const { createFFmpeg, fetchFile } = FFmpeg;
+                const ffmpeg = createFFmpeg({ log: true });
+                ffmpeg.setProgress(({ ratio }) => setProcessing(ratio * 100));
+                setLoading(t('LOADING_FFMPEG'));
+                await ffmpeg.load();
+                setLoading(t('LOADING_FONT'));
 
-            await fs.mkdir('/fonts');
-            const tran = viewEng ? 'NotoSans' : translate;
-            const fontExist = await fs.exists(`/fonts/${tran}.ttf`);
-            if (fontExist) {
-                const fontBlob = await fs.readFile(`/fonts/${tran}.ttf`);
-                ffmpeg.FS('writeFile', `tmp/${tran}.ttf`, await fetchFile(fontBlob));
-            } else {
-                const fontUrl = `https://cdn.jsdelivr.net/gh/payyup/SubPlayer@master/public/${tran}.ttf`;
-                const fontBlob = await fetch(fontUrl).then((res) => res.blob());
-                await fs.writeFile(`/fonts/${tran}.ttf`, fontBlob);
-                ffmpeg.FS('writeFile', `/tmp/${tran}.ttf`, await fetchFile(fontBlob));
+                await fs.mkdir('/fonts');
+                const tran = viewEng ? 'NotoSans' : translate;
+                const fontExist = await fs.exists(`/fonts/${tran}.ttf`);
+                if (fontExist) {
+                    const fontBlob = await fs.readFile(`/fonts/${tran}.ttf`);
+                    ffmpeg.FS('writeFile', `tmp/${tran}.ttf`, await fetchFile(fontBlob));
+                } else {
+                    const fontUrl = `https://cdn.jsdelivr.net/gh/payyup/SubPlayer@master/public/${tran}.ttf`;
+                    const fontBlob = await fetch(fontUrl).then((res) => res.blob());
+                    await fs.writeFile(`/fonts/${tran}.ttf`, fontBlob);
+                    ffmpeg.FS('writeFile', `/tmp/${tran}.ttf`, await fetchFile(fontBlob));
+                }
+                setLoading(t('LOADING_VIDEO'));
+                ffmpeg.FS(
+                    'writeFile',
+                    videoFile ? videoFile.name : 'sample.mp4',
+                    await fetchFile(videoFile || 'sample.mp4'),
+                );
+                setLoading(t('LOADING_SUB'));
+                const subtitleFile = new File([new Blob([sub2ass(subtitle, viewEng, translate)])], 'subtitle.ass');
+                ffmpeg.FS('writeFile', subtitleFile.name, await fetchFile(subtitleFile));
+                setLoading('');
+                notify({
+                    message: t('BURN_START'),
+                    level: 'info',
+                });
+                const output = `${Date.now()}.mp4`;
+                await ffmpeg.run(
+                    '-i',
+                    videoFile ? videoFile.name : 'sample.mp4',
+                    '-vf',
+                    `ass=${subtitleFile.name}:fontsdir=/tmp`,
+                    '-preset',
+                    videoFile ? 'fast' : 'ultrafast',
+                    output,
+                );
+                const uint8 = ffmpeg.FS('readFile', output);
+                download(URL.createObjectURL(new Blob([uint8])), `${output}`);
+                setProcessing(0);
+                ffmpeg.setProgress(() => null);
+                notify({
+                    message: t('BURN_SUCCESS'),
+                    level: 'success',
+                });
+            } catch (error) {
+                setLoading('');
+                setProcessing(0);
+                notify({
+                    message: t('BURN_ERROR'),
+                    level: 'error',
+                });
             }
-            setLoading(t('LOADING_VIDEO'));
-            ffmpeg.FS(
-                'writeFile',
-                videoFile ? videoFile.name : 'sample.mp4',
-                await fetchFile(videoFile || 'sample.mp4'),
-            );
-            setLoading(t('LOADING_SUB'));
-            const subtitleFile = new File([new Blob([sub2ass(subtitle, viewEng, translate)])], 'subtitle.ass');
-            ffmpeg.FS('writeFile', subtitleFile.name, await fetchFile(subtitleFile));
-            setLoading('');
+        } else {
             notify({
-                message: t('BURN_START'),
-                level: 'info',
-            });
-            const output = `${Date.now()}.mp4`;
-            await ffmpeg.run(
-                '-i',
-                videoFile ? videoFile.name : 'sample.mp4',
-                '-vf',
-                `ass=${subtitleFile.name}:fontsdir=/tmp`,
-                '-preset',
-                videoFile ? 'fast' : 'ultrafast',
-                output,
-            );
-            const uint8 = ffmpeg.FS('readFile', output);
-            download(URL.createObjectURL(new Blob([uint8])), `${output}`);
-            setProcessing(0);
-            ffmpeg.setProgress(() => null);
-            notify({
-                message: t('BURN_SUCCESS'),
-                level: 'success',
-            });
-        } catch (error) {
-            setLoading('');
-            setProcessing(0);
-            notify({
-                message: t('BURN_ERROR'),
+                message: "Please wait until the video is downloaded",
                 level: 'error',
             });
         }
-    }, [notify, setProcessing, setLoading, videoFile, subtitle, viewEng, translate]);
+    }, [notify, setProcessing, setLoading, videoFile, subtitle, viewEng, translate, exportReady]);
 
     const onVideoChange = useCallback(
         (event) => {
@@ -387,6 +395,7 @@ export default function Header({
                     waveform.drawer.update();
                     waveform.seek(0);
                     player.currentTime = 0;
+                    setExportReady(true);
                     clearSubs();
                     setSubtitle([
                         newSub({
@@ -505,11 +514,14 @@ export default function Header({
                     const file = new File([blob], 'video.mp4');
                     setVideoFile(file);
                     decodeAudioData(file);
-                    const url = URL.createObjectURL(blob);
                     waveform.decoder.destroy();
                     waveform.drawer.update();
                     waveform.seek(0);
-                    player.src = url;
+                    setExportReady(true);
+                    notify({
+                        message: "Video ready to export",
+                        level: 'success',
+                    });
                 })
                 .catch((err) => {
                     notify({
@@ -588,6 +600,7 @@ export default function Header({
                 setVideoFile(null);
                 player.currentTime = 0;
                 player.src = directUrl;
+                setExportReady(false);
                 await fetch(directUrl, {
                     mode: 'cors',
                 })
@@ -597,8 +610,11 @@ export default function Header({
                 .then(function(blob) {
                     const file = new File([blob], 'video.mp4');
                     setVideoFile(file);
-                    const url = URL.createObjectURL(blob);
-                    player.src = url;
+                    setExportReady(true);
+                    notify({
+                        message: "Video ready to export",
+                        level: 'success',
+                    });
                 })
                 .catch(() => {
                     notify({
@@ -609,7 +625,7 @@ export default function Header({
             }
         }
         loadVideo();
-    }, [notify, player, directUrl]);
+    }, [notify, player, directUrl, setExportReady]);
 
     return (
         <Style className="tool">
