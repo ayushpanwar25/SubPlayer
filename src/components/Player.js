@@ -214,7 +214,7 @@ export default function Player(props) {
                                 <Translate value="SPLIT" />
                             </div>
                         ) : null}
-                        {props.viewEng ? (
+                        {(props.viewEng || !currentSub.text2) ? (
                             <TextareaAutosize
                             className={`textarea ${!props.playing ? 'pause' : ''}`}
                             value={currentSub.text}
