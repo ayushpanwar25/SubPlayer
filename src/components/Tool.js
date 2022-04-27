@@ -360,7 +360,12 @@ export default function Header({
                 const uint8 = ffmpeg.FS('readFile', output);
                 download(URL.createObjectURL(new Blob([uint8])), `${output}`);
                 setProcessing(0);
+                ffmpeg.FS('unlink', `/tmp/${tran}.ttf`);
+                ffmpeg.FS('unlink', videoFile ? videoFile.name : 'sample.mp4',);
+                ffmpeg.FS('unlink', subtitleFile.name);
+                ffmpeg.FS('unlink', output);
                 ffmpeg.setProgress(() => null);
+                window.location.reload();
                 notify({
                     message: t('BURN_SUCCESS'),
                     level: 'success',
