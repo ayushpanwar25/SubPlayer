@@ -1,7 +1,7 @@
 import styled from 'styled-components';
 import languages from '../libs/languages';
 import { t, Translate } from 'react-i18nify';
-import React, { useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { getExt, download } from '../utils';
 import { file2sub, sub2vtt, sub2srt, sub2txt } from '../libs/readSub';
 import sub2ass from '../libs/readSub/sub2ass';
@@ -266,8 +266,8 @@ export default function Header({
     setTranslate,
     youtubeUrl,
     setYoutubeUrl,
-    resumed,
-    setResumed,
+    directUrl,
+    setDirectUrl,
     viewEng,
     setViewEng,
 }) {
@@ -389,7 +389,6 @@ export default function Header({
                     waveform.seek(0);
                     player.currentTime = 0;
                     clearSubs();
-                    setResumed(false);
                     setSubtitle([
                         newSub({
                             start: '00:00:00.000',
@@ -406,7 +405,7 @@ export default function Header({
                 }
             }
         },
-        [newSub, notify, player, setSubtitle, waveform, clearSubs, decodeAudioData, setResumed],
+        [newSub, notify, player, setSubtitle, waveform, clearSubs, decodeAudioData],
     );
 
     const onSubtitleChange = useCallback(
@@ -456,6 +455,11 @@ export default function Header({
                 });
             });
             if (res) {
+                player.currentTime = 0;
+                player.src = res.video;
+                setLoading('');
+                setDirectUrl(res.video);
+                window.localStorage.setItem('directUrl', JSON.stringify(res.video));
                 await fetch(res.video, {
                     mode: 'cors',
                 })
@@ -470,53 +474,49 @@ export default function Header({
                     waveform.decoder.destroy();
                     waveform.drawer.update();
                     waveform.seek(0);
-                    player.currentTime = 0;
                     player.src = url;
-                    setLoading('');
-                    setResumed(false);
-                    window.localStorage.setItem('yturl', JSON.stringify(youtubeUrl));
                 })
                 .catch((err) => {
                     notify({
-                        message: "Error fetching video",
+                        message: "Error downloading video (likely CORS issue)",
                         level: 'error',
                     });
                 });
-                if(!resumed) {
-                    clearSubs();
-                    if(res.subtitles) {
-                        await fetch(res.subtitles)
-                        .then(function(res) {
-                            return res.blob();
-                        })
+                clearSubs();
+                if(res.subtitles) {
+                    setLoading(t('LOADING_SUB'));
+                    await fetch(res.subtitles)
+                    .then(function(res) {
+                        return res.blob();
+                    })
+                    .then((data) => {
+                        const file = new File([data], 'subtitle.vtt');
+                        file2sub(file)
                         .then((data) => {
-                            const file = new File([data], 'subtitle.vtt');
-                            file2sub(file)
-                            .then((data) => {
-                                setSubtitle(data);
-                            })
-                            .catch((err) => {
-                                notify({
-                                    message: err.message,
-                                    level: 'error',
-                                });
-                            });
+                            setSubtitle(data);
                         })
                         .catch((err) => {
                             notify({
-                                message: "Error fetching subtitles",
+                                message: err.message,
                                 level: 'error',
                             });
                         });
-                    } else {
-                        setSubtitle([
-                            newSub({
-                                start: '00:00:00.000',
-                                end: '00:00:01.000',
-                                text: t('SUB_TEXT'),
-                            }),
-                        ]);
-                    }
+                        setLoading('');
+                    })
+                    .catch((err) => {
+                        notify({
+                            message: "Error fetching subtitles",
+                            level: 'error',
+                        });
+                    });
+                } else {
+                    setSubtitle([
+                        newSub({
+                            start: '00:00:00.000',
+                            end: '00:00:01.000',
+                            text: t('SUB_TEXT'),
+                        }),
+                    ]);
                 }
             } else {
                 notify({
@@ -525,7 +525,7 @@ export default function Header({
                 });
             }
         },
-        [newSub, notify, player, setSubtitle, setLoading, waveform, clearSubs, decodeAudioData, youtubeUrl, resumed, setResumed],
+        [newSub, notify, player, setSubtitle, setLoading, waveform, clearSubs, decodeAudioData, youtubeUrl, setDirectUrl],
     );
 
     const onInputClick = useCallback((event) => {
@@ -583,6 +583,39 @@ export default function Header({
             });
     }, [subtitle, setLoading, formatSub, setSubtitle, tempTranslate, setTranslate, notify]);
 
+    useEffect(() => {
+        async function loadVideo() {
+            if(directUrl) {
+                if(waveform) waveform.decoder.destroy();
+                player.currentTime = 0;
+                player.src = directUrl;
+                setLoading('');
+                await fetch(directUrl, {
+                    mode: 'cors',
+                })
+                .then(function(res) {
+                    return res.blob();
+                })
+                .then(function(blob) {
+                    const file = new File([blob], 'video.mp4');
+                    setVideoFile(file);
+                    decodeAudioData(file);
+                    const url = URL.createObjectURL(blob);
+                    waveform.drawer.update();
+                    waveform.seek(0);
+                    player.src = url;
+                })
+                .catch(() => {
+                    notify({
+                        message: "Error downloading video (likely CORS issue)",
+                        level: 'error',
+                    });
+                });
+            }
+        }
+        loadVideo();
+    }, [newSub, notify, player, setSubtitle, setLoading, waveform, clearSubs, decodeAudioData, directUrl]);
+
     return (
         <Style className="tool">
             <div className="top">
@@ -631,7 +664,7 @@ export default function Header({
                         onClick={() => {
                             if (window.confirm(t('CLEAR_TIP')) === true) {
                                 clearSubs();
-                                window.localStorage.removeItem('yturl');
+                                window.localStorage.removeItem('directUrl');
                                 window.localStorage.removeItem('lang');
                                 window.localStorage.removeItem('subtitle');
                                 window.location.reload();
@@ -664,9 +697,6 @@ export default function Header({
                         <Translate value="HOTKEY_02" />
                     </span>
                 </div>
-            </div>
-            <div className="bottom">
-                Modified by Ayush Panwar
             </div>
         </Style>
     );

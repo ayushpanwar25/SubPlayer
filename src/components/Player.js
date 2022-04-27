@@ -186,10 +186,6 @@ export default function Player(props) {
     return (
         <Style className="player">
             <div className="video" ref={$player}>
-                {props.resumed &&
-                <div className="videoPlaceholder" onClick={() => props.setResumed(false)}>
-                    Subtitles from previous session found. Please import the video again to retain the subtitles or start afresh by clicking 'Clear' on the right. Click to ignore.
-                </div>}
                 <VideoWrap {...props} />
                 {props.player && currentSub ? (
                     <div className="subtitle">

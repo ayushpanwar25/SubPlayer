@@ -11,9 +11,13 @@ This is a fork of SubPlayer with added support for YouTube, Indic languages with
 
 ## Usage
 
-* Since the direct video link returned by the [public API](https://youtube-dl-utils-api.herokuapp.com/get_youtube_video_link_with_captions) does not respond with a 'Access-Control-Allow-Origin' header and returns an opaque response without CORS enabled, [this Google Chrome extension](https://chrome.google.com/webstore/detail/moesif-origin-cors-change/digfbfaphojjndkpccljibejjbppifbc) is needed to fetch the video from YouTube servers.
+* Since the direct video link returned by the [public API](https://youtube-dl-utils-api.herokuapp.com/get_youtube_video_link_with_captions) does not respond with a 'Access-Control-Allow-Origin' header and returns an opaque response without CORS enabled, [this Google Chrome extension](https://chrome.google.com/webstore/detail/moesif-origin-cors-change/digfbfaphojjndkpccljibejjbppifbc) is needed to download the video from YouTube servers in order to ultimately export it after burning subtitles.
 
-* The entire YouTube video is then downloaded along with eng subtitles before it can be played/edited.
+* COEP and COOP headers are enabled in order to use SharedArrayBuffer for FFmpeg.
+
+* The fonts for subtitles are automatically changed based on the language.
+
+
 
 ## License
 

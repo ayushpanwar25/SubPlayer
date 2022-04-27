@@ -50,9 +50,9 @@ export default function App({ defaultLang }) {
     const [playing, setPlaying] = useState(false);
     const [currentTime, setCurrentTime] = useState(0);
     const [currentIndex, setCurrentIndex] = useState(-1);
-    const [translate, setTranslate] = useState('en');
+    const [translate, setTranslate] = useState('bn');
     const [youtubeUrl, setYoutubeUrl] = useState('');
-    const [resumed, setResumed] = useState(false);
+    const [directUrl, setDirectUrl] = useState(null);
     const [viewEng, setViewEng] = useState(true);
 
     const newSub = useCallback((item) => new Sub(item), []);
@@ -287,12 +287,11 @@ export default function App({ defaultLang }) {
     }, [currentTime, subtitle]);
 
     useEffect(() => {
-        const localSubtitleString = window.localStorage.getItem('subtitle');
-        const localYoutubeString = window.localStorage.getItem('yturl');
-        const localLanguageString = window.localStorage.getItem('lang');
-        if(localSubtitleString || localYoutubeString || localLanguageString) setResumed(true);
-        if(localYoutubeString) setYoutubeUrl(JSON.parse(localYoutubeString));
+        const localSubtitleString = window.localStorage['subtitle'];
+        const localLanguageString = window.localStorage['lang'];
+        const localDirectString = window.localStorage['directUrl'];
         if(localLanguageString) setTranslate(JSON.parse(localLanguageString));
+        if(localDirectString) setDirectUrl(JSON.parse(localDirectString));
         const fetchSubtitle = () =>
             fetch('/sample.json')
                 .then((res) => res.json())
@@ -314,7 +313,7 @@ export default function App({ defaultLang }) {
         } else {
             fetchSubtitle();
         }
-    }, [setSubtitleOriginal, setYoutubeUrl, setTranslate, setResumed]);
+    }, [setSubtitleOriginal, setYoutubeUrl, setDirectUrl, directUrl, setTranslate, player]);
 
     const props = {
         player,
@@ -339,8 +338,8 @@ export default function App({ defaultLang }) {
         setTranslate,
         youtubeUrl,
         setYoutubeUrl,
-        resumed,
-        setResumed,
+        directUrl,
+        setDirectUrl,
         viewEng,
         setViewEng,
 

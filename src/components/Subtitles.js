@@ -40,6 +40,7 @@ const Style = styled.div`
                     &.container {
                         padding: 0;
                         border: none;
+                        z-index: 100;
                     }
 
                     &.highlight {

@@ -93,6 +93,7 @@ export default function backlight($player, $video) {
     $player.insertBefore($backlight, $video);
 
     function run() {
+        if($video.src.includes('googlevideo.com')) return;
         const { clientWidth, clientHeight } = $video;
         const colors = getColors($canvas, $video, clientWidth, clientHeight);
         colors.forEach(({ r, g, b }, index) => {
